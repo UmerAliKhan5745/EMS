@@ -5,11 +5,11 @@ import { sendOtpEmail } from '../../services/emailOtpService';
 import asyncHandler from 'express-async-handler';
 import { sequelize } from '../../config/dbs';
 import { sendOTP } from '../../services/phoneOtpService';
-
 const MAX_RETRIES = 3;
 
 const registerUser:any = async (req:any, res:any, retryCount = 0) => {
-    const { name, email, password, phoneNumber } = req.body;
+
+    const {  email, password, phoneNumber } = req.body;
     const transaction = await sequelize.transaction();
     
     try {
@@ -22,11 +22,11 @@ const registerUser:any = async (req:any, res:any, retryCount = 0) => {
 
         if (existingUser) {
             await transaction.rollback();
-            return res.status(400).json({ error: 'User already exists' });
+            return res.status(400).json({ message: 'User already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({ name, email, phoneNumber, password: hashedPassword }, { transaction });
+        const user = await User.create({  email, phoneNumber, password: hashedPassword }, { transaction });
         
         await transaction.commit();
 
@@ -50,7 +50,8 @@ const registerUser:any = async (req:any, res:any, retryCount = 0) => {
                 });
         }
 
-        res.status(201).json(user);
+        
+      return  res.status(201).json({"message":"Please verify the OTP sent to your email or phone",user});
     } catch (error:any) {
         console.error(error.message);
         await transaction.rollback();

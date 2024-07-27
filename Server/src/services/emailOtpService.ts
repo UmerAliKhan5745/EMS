@@ -1,6 +1,7 @@
  
 import nodemailer from "nodemailer";
 import OTP from "../models/auth/otp";
+const crypto = require('crypto');
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -13,12 +14,17 @@ const transporter = nodemailer.createTransport({
 
 
  
-const  otp = Math.floor(100000 + Math.random() * 900000).toString();
+function generateOTP() {
+  return crypto.randomInt(100000, 1000000).toString(); // Generates a 6-digit OTP
+}
+
+
 const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   
   export const sendOtpEmail = async (email: string,userId:number) => {
-
+    const  otp = generateOTP()
+console.log(otp)
 
 
     try {
@@ -37,13 +43,12 @@ const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
         console.log("Verification email sent:", info.messageId);
 
 
- let a=  await OTP.create({
+   await OTP.create({
     userId,
     otp,
     expiresAt
 });
 
-console.log(a,'o')
       }
     } catch (error) {
   

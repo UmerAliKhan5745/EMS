@@ -26,7 +26,6 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
 
 // Registration-specific validation
 const validateRegister = [
-    check('name').not().isEmpty().withMessage('Name is required'),
     ...validateEmailOrPhone,
     validatePassword.isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
     handleValidationErrors

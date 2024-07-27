@@ -1,18 +1,20 @@
 import cron from 'node-cron';
 import User from '../models/auth/user';
+import OTP from '../models/auth/otp';
 import { Op } from 'sequelize';
 
 // Schedule a task to run every minute
 cron.schedule('* * * * *', async () => {
-    const fiveMinutesAgo = new Date(Date.now() - 5*60 * 1000); // 10 seconds ago
-    console.log(`Cron job running. Deleting users not verified before ${fiveMinutesAgo}`);
+    const tenSecondsAgo = new Date(Date.now() - 10 * 1000); // 10 seconds ago
+    console.log(`Cron job running. Deleting unverified users and associated OTPs before ${tenSecondsAgo}`);
 
     try {
+        // Find unverified users created before ten seconds ago
         const usersToDelete = await User.findAll({
             where: {
                 isVerified: false,
                 createdAt: {
-                    [Op.lt]: fiveMinutesAgo
+                    [Op.lt]: tenSecondsAgo
                 }
             }
         });
@@ -20,20 +22,32 @@ cron.schedule('* * * * *', async () => {
         console.log(`Users to delete: ${usersToDelete.length}`);
 
         if (usersToDelete.length > 0) {
-            const deletedUsers = await User.destroy({
+            // Extract user IDs of the unverified users
+            const userIds = usersToDelete.map((user:any) => user.id);
+
+            // Delete associated OTPs
+            const deletedOTPs = await OTP.destroy({
                 where: {
-                    isVerified: false,
-                    createdAt: {
-                        [Op.lt]: fiveMinutesAgo
+                    userId: {
+                        [Op.in]: userIds
                     }
                 }
             });
 
-            console.log(`Deleted ${deletedUsers} unverified users.`);
+            // Delete the unverified users
+            const deletedUsers = await User.destroy({
+                where: {
+                    id: {
+                        [Op.in]: userIds
+                    }
+                }
+            });
+
+            console.log(`Deleted ${deletedUsers} unverified users and ${deletedOTPs} associated OTPs.`);
         } else {
             console.log('No users to delete.');
         }
     } catch (error) {
-        console.error('Error deleting unverified users:', error);
+        console.error('Error deleting unverified users or associated OTPs:', error);
     }
 });

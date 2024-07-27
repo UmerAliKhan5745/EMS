@@ -28,7 +28,7 @@ const verifyOTP = async (req: any, res: any) => {
         const token = jwt.sign({ userId }, 'umeralikhan', { expiresIn: '1h' });
 
         // Send response with JWT
-        res.json({ message: 'OTP Verified', token });
+        res.json({ success:true,message: "OTP verified successfully!", token });
     } catch (error) {
         console.error('Error verifying OTP:', error);
         res.status(500).json({ message: 'Internal server error' });
